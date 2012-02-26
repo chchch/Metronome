@@ -1,11 +1,15 @@
 $(document).ready(function() {
 
-	bpm = 10;
+	master_bpm = 60;
 	fpm = 3600; // assuming 60 frames per second
 	is_chrome = /chrome/.test( navigator.userAgent.toLowerCase() );
 	animator = new Animator();
-	var metronome = new Nome(400,20,5);
+	var metronome = new Nome(400,20,5);	
 	var four = new Nome(400,20,4);
+	var master = metronome.beats;
+	bpm = master_bpm/master;
+	global_bpm = metronome.beats*bpm;
+	$("#main").sortable();
 	$("#main").append(metronome.div);
 	$("#main").append(four.div);
 	metronome.start();
@@ -18,6 +22,21 @@ Nome = function(w,h,beats) {
 	var self = this;
 	this.div = document.createElement("div");
 	this.canvas = document.createElement("canvas");
+	this.options = document.createElement("form");
+	this.playing = document.createElement("input");
+	this.playing.type = "checkbox";
+	this.playing.checked = true;
+	this.playing.onclick = function() {self.mute()};
+	this.rhythm = document.createElement("input");
+	this.rhythm.type = "text";
+	this.rhythm.size = 2;
+	this.rhythm.maxLength = 2;
+	this.rhythm.style.width = "2em";
+	this.rhythm.value = beats;
+	this.rhythm.onkeypress = function(event) {return numbersonly(self.rhythm,event,self)};
+	this.options.appendChild(this.playing);
+	this.options.appendChild(this.rhythm);
+	this.div.appendChild(this.options); 
 	this.div.appendChild(this.canvas);
 	this.ctx = this.canvas.getContext('2d');
 	this.size = {w:w,h:h};
@@ -30,49 +49,84 @@ Nome = function(w,h,beats) {
 	this.canvas.style.left = 0 + 'px';
 	this.canvas.style.border = "1px solid yellow";
 	this.active = false;
+	this.silent = false;
 	this.sound = new PSound(8);
 	this.frame = 0;
-	this.count = 0;
-	this.max = fpm/bpm;
+	this.count = [];
 	this.beats = beats;
-	this.framesperbeat = this.max/this.beats;
-	this.pixelsperbeat = this.size.w/this.beats;
+	
 	this.clear = function() {
 		self.ctx.clearRect(0,0,self.size.w,self.size.h);
 	}
-	this.draw = function(d) {
-		var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*self.frame/self.max,self.size.h);
-		lineargrad.addColorStop(0,"white");
-		lineargrad.addColorStop(1,"green");
-		self.ctx.fillStyle = lineargrad;
-		self.ctx.fillRect(0,0,self.size.w*self.frame/self.max,self.size.h);
-		self.ctx.fill();	
+	this.draw = function() {
+		self.clear();
+		d = Math.floor(self.frame/self.framesperbeat);
+		if(!self.silent) {
+			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*self.frame/self.max,self.size.h);
+			lineargrad.addColorStop(0,"white");
+			lineargrad.addColorStop(1,"green");
+
+			self.ctx.fillStyle = lineargrad;
+			self.ctx.fillRect(0,0,self.size.w*self.frame/self.max,self.size.h);
+			self.ctx.fill();
+		}	
 		self.ctx.fillStyle = "red";
 		for(var n=0;n<=d;n++) {
 			self.ctx.fillRect(n*self.pixelsperbeat-1,0,2,self.size.h);
 		}
 		self.ctx.fill();
+		self.ctx.fillStyle = "green";
+		if(d<self.beats) {
+			for(var n=d+1;n<self.beats;n++) {
+				self.ctx.fillRect(n*self.pixelsperbeat-1,0,2,self.size.h);
+			}
+			self.ctx.fill();
+		}
 	}
 	this.animate = function() {
 		if(self.frame < self.max) {
-			self.draw(self.count-1);
-			if(self.frame % this.framesperbeat == 0) {
-				if(is_chrome) self.sound.play();
-				else self.sound.cloneNode(false).play();
-				self.count++;
+			if(!self.silent) self.draw();
+				var ss = self.count.indexOf(self.frame);
+				if(ss > -1) {
+					if(!self.silent) {
+						if(is_chrome) self.sound.play();
+						else self.sound.cloneNode(false).play();
+					}
 			}
 			self.frame++;
 		}
 		else {
-			self.clear();
 			self.frame = 0;
-			self.count = 0;
 		}
 	}
+	this.reinit = function(b) {
+		self.beats = b;
+		self.framesperbeat = self.max/self.beats;
+		self.pixelsperbeat = self.size.w/self.beats;
+		self.count = [];
+		for(var n=0;n<self.beats;n++) {
+			self.count.push(Math.round(n*self.framesperbeat));
+		}
+	}
+		
 	this.start = function() {
+		self.max = fpm/bpm;
+		self.framesperbeat = self.max/self.beats;
+		self.pixelsperbeat = self.size.w/self.beats;
+		self.count = [];
+		for(var n=0;n<self.beats;n++) {
+			self.count.push(Math.round(n*self.framesperbeat));
+		}
 		self.active = true;
 		animator.enqueue(self);		
 //		animator.start();
+	}
+	this.mute = function() {
+		if(!self.silent) {
+		self.silent = true;  
+		self.draw(0);
+		}
+		else self.silent = false;
 	}
 }
 
@@ -129,6 +183,73 @@ function Animator() {
    	}
 	}
 }
+
+function numbersonly(field,evt,nome) {
+  var theEvent = evt || window.event;
+  var key = theEvent.keyCode || theEvent.which;
+  keychar = String.fromCharCode( key );
+  if(key == 38) { // up
+   	if(field.value < 99) field.value++;
+   	nome.reinit(field.value);
+   	return true;
+  }
+  else if(key == 40) { // down
+   	if(field.value > 1) field.value--;
+   	nome.reinit(field.value);
+   	return true;
+  }
+  else  if ((key==null) || (key==0) || (key==8) || 
+  	  (key==9) || (key==27) ) // control keys
+  		return true;
+  	 
+  else if (key == 13) {
+  	nome.reinit(field.value);
+  	return false;
+  }
+  else if(("0123456789").indexOf(keychar) > -1) {
+  		return true;
+  }
+  else {
+    theEvent.returnValue = false;
+    if(theEvent.preventDefault) theEvent.preventDefault();
+  }
+}
+
+
+/* function numbersonly(myfield, e, dec) {
+	var key;
+	var keychar;
+
+	if (window.event)
+   	key = window.event.keyCode;
+	else if (e)
+   	key = e.which;
+	else
+   	return true;
+  
+	key = e.keyCode;
+	keychar = String.fromCharCode(key);
+
+	// control keys
+	if ((key==null) || (key==0) || (key==8) || 
+  	  (key==9) || (key==13) || (key==27) )
+  	 return true;
+	
+	else if(key == 90) { // up
+   	myfield.value++;
+   	return true;
+   }
+   else if(key == 40) { // down
+   	myfield.value--;
+   	return true;
+   }
+
+	// numbers
+	else if ((("0123456789").indexOf(keychar) > -1))
+   	return true;
+	else
+   	return false;
+} */
 
 (function() {
     var lastTime = 0;
