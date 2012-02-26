@@ -4,15 +4,22 @@ $(document).ready(function() {
 	fpm = 3600; // assuming 60 frames per second
 	is_chrome = /chrome/.test( navigator.userAgent.toLowerCase() );
 	animator = new Animator();
-	var metronome = new Nome(400,20,5);	
+	var five = new Nome(400,20,5);	
 	var four = new Nome(400,20,4);
-	var master = metronome.beats;
-	bpm = master_bpm/master;
-	global_bpm = metronome.beats*bpm;
+	var master = five;
+	bpm = master_bpm/master.beats;
+	global_bpm = master.beats*bpm;
 	$("#main").sortable();
-	$("#main").append(metronome.div);
+	$("#main").append(five.div);
 	$("#main").append(four.div);
-	metronome.start();
+	$("#main").append("<div id='plus'>+</div>");
+	$("#plus").click(function() {
+		var newnome = new Nome(400,20,2);
+		$("#plus").before(newnome.div);
+		newnome.start();
+		newnome.frame = master.frame;
+	});
+	five.start();
 	four.start();
 	animator.start();
 
@@ -58,9 +65,9 @@ Nome = function(w,h,beats) {
 	this.clear = function() {
 		self.ctx.clearRect(0,0,self.size.w,self.size.h);
 	}
-	this.draw = function() {
+	this.draw = function(d) {
 		self.clear();
-		d = Math.floor(self.frame/self.framesperbeat);
+		var d = (typeof(d) != "undefined" ? d : Math.floor(self.frame/self.framesperbeat));
 		if(!self.silent) {
 			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*self.frame/self.max,self.size.h);
 			lineargrad.addColorStop(0,"white");
@@ -99,8 +106,8 @@ Nome = function(w,h,beats) {
 			self.frame = 0;
 		}
 	}
-	this.reinit = function(b) {
-		self.beats = b;
+	this.init = function(b) {
+		if(b) self.beats = b;
 		self.framesperbeat = self.max/self.beats;
 		self.pixelsperbeat = self.size.w/self.beats;
 		self.count = [];
@@ -111,15 +118,9 @@ Nome = function(w,h,beats) {
 		
 	this.start = function() {
 		self.max = fpm/bpm;
-		self.framesperbeat = self.max/self.beats;
-		self.pixelsperbeat = self.size.w/self.beats;
-		self.count = [];
-		for(var n=0;n<self.beats;n++) {
-			self.count.push(Math.round(n*self.framesperbeat));
-		}
+		self.init();
 		self.active = true;
-		animator.enqueue(self);		
-//		animator.start();
+		animator.enqueue(self);
 	}
 	this.mute = function() {
 		if(!self.silent) {
@@ -190,12 +191,12 @@ function numbersonly(field,evt,nome) {
   keychar = String.fromCharCode( key );
   if(key == 38) { // up
    	if(field.value < 99) field.value++;
-   	nome.reinit(field.value);
+   	nome.init(field.value);
    	return true;
   }
   else if(key == 40) { // down
    	if(field.value > 1) field.value--;
-   	nome.reinit(field.value);
+   	nome.init(field.value);
    	return true;
   }
   else  if ((key==null) || (key==0) || (key==8) || 
@@ -203,7 +204,7 @@ function numbersonly(field,evt,nome) {
   		return true;
   	 
   else if (key == 13) {
-  	nome.reinit(field.value);
+  	nome.init(field.value);
   	return false;
   }
   else if(("0123456789").indexOf(keychar) > -1) {
@@ -214,42 +215,6 @@ function numbersonly(field,evt,nome) {
     if(theEvent.preventDefault) theEvent.preventDefault();
   }
 }
-
-
-/* function numbersonly(myfield, e, dec) {
-	var key;
-	var keychar;
-
-	if (window.event)
-   	key = window.event.keyCode;
-	else if (e)
-   	key = e.which;
-	else
-   	return true;
-  
-	key = e.keyCode;
-	keychar = String.fromCharCode(key);
-
-	// control keys
-	if ((key==null) || (key==0) || (key==8) || 
-  	  (key==9) || (key==13) || (key==27) )
-  	 return true;
-	
-	else if(key == 90) { // up
-   	myfield.value++;
-   	return true;
-   }
-   else if(key == 40) { // down
-   	myfield.value--;
-   	return true;
-   }
-
-	// numbers
-	else if ((("0123456789").indexOf(keychar) > -1))
-   	return true;
-	else
-   	return false;
-} */
 
 (function() {
     var lastTime = 0;
