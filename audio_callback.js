@@ -2,12 +2,12 @@
 var tickers = new Array();
 
 function Ticker(id) {
-    this.id = id; 
+    this.id = id;
     this.counter = 0;
     this.beat = 0;
     this.ratio = id + 1;
     this.nextSample = 0;
-    this.bpm = 30.0; 
+    this.bpm = 30.0;
     this.period = 0;
     this.flt = audioLib.LP12Filter(44100, this.ratio * 440, 4);
     var INV_SECONDS_PER_MIN = 1.0 / 60.0;
