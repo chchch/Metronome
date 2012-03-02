@@ -4,15 +4,17 @@ $(document).ready(function() {
 	fpm = 3600; // assuming 60 frames per second
 	is_chrome = /chrome/.test( navigator.userAgent.toLowerCase() );
 	animator = new Animator();
-	var five = new Nome(400,20,5);	
+    nomes = [];
+    var five = new Nome(400,20,5);	
 	var four = new Nome(400,20,4);
-	var master = five;
-	bpm = master_bpm/master.beats;
-	global_bpm = master.beats*bpm;
-	$("#main").sortable();
+    bpm = Math.round(master_bpm/nomes[0].beats);
+	
+    $("#main").sortable({
+        items: "div:not(.no-sort)"
+        });
 	$("#main").append(five.div);
 	$("#main").append(four.div);
-	$("#main").append("<div id='plus'>+</div>");
+	$("#main").append("<div id='plus' class='no-sort'>+</div>");
 	$("#plus").click(function() {
 		var newnome = new Nome(400,20,2);
 		$("#plus").before(newnome.div);
@@ -27,7 +29,10 @@ $(document).ready(function() {
 
 Nome = function(w,h,beats) {
 	var self = this;
+    if(typeof nomes == "undefined") nomes = [];
+    nomes.push(this);
 	this.div = document.createElement("div");
+    this.div.id = "nome-"+(nomes.length-1);
 	this.canvas = document.createElement("canvas");
 	this.options = document.createElement("form");
 	this.playing = document.createElement("input");
