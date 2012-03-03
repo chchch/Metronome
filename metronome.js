@@ -8,13 +8,48 @@ $(document).ready(function() {
     nomes = [];
     var five = new Nome(nome_size.w,nome_size.h,5);	
 	var four = new Nome(nome_size.w,nome_size.h,4);
-    bpm = Math.round(master_bpm/nomes[0].beats);
+    master_nome = 0;
+    bpm = Math.round(master_bpm/nomes[master_nome].beats);
 	frame = 0;
     max_frame = fpm/bpm;
 
     $("#main").sortable({
-        items: "div:not(.no-sort)"
+        items: "div:not(.no-sort)",
+        stop: function(event,ui) {
+                master_nome = $("#main div:eq(2)").attr('id').split("-")[1];
+                bpm = Math.round(master_bpm/nomes[master_nome].beats);
+                max_frame = fpm/bpm;
+                for(var n=0;n<nomes.length;n++) {
+                    nomes[n].init();
+                }
+            }
         });
+/*    $("#main").append("<div style='position:relative;margin: 0 \
+        auto;width:"+(nome_size.w+120)+"px'><form \
+        style='position:absolute;width:100%;height:"+(nome_size.h+6)+"px;top:-3px; \
+        border-width:1px 1px 1px 0;border-style:solid;border-color:black;left:35px'> \
+        <div style='position:absolute;right:0px'> \
+        <input type='text' style='width:2em' size='3' max_length='3' \
+        value='60'></input>BPM </div></form></div>"); */
+    $("#main").append("<div class='no-sort' \
+        style='position:relative;margin: 0 auto;width:"+(nome_size.w+130)+"px'> \
+        <form style='position:absolute;width:100%;height:"+(nome_size.h+7)+"px; \
+        top:-3px; background: grey;left:35px'> \
+        <div style='position:absolute;right:5px'> \
+        <input id='bpm' type='text' style='width:2em' size='3' max_length='3' \
+        value='60'></input>BPM</div></form></div>");
+    $("#bpm").keydown(function(event) {
+        var result = numbersonly(document.getElementById("bpm"),event,999);
+        if(result[1] != false) {
+            master_bpm = result[1];
+            bpm = Math.round(master_bpm/nomes[master_nome].beats);
+            max_frame = fpm/bpm;
+            for(var n=0;n<nomes.length;n++) {
+                nomes[n].init();
+            }
+        }
+        return result[0];
+    });
 	$("#main").append(five.div);
 	$("#main").append(four.div);
 	$("#main").append("<div id='plus' class='no-sort'>+</div>");
@@ -47,7 +82,11 @@ Nome = function(w,h,beats) {
 	this.rhythm.maxLength = 2;
 	this.rhythm.style.width = "2em";
 	this.rhythm.value = beats;
-	this.rhythm.onkeypress = function(event) {return numbersonly(self.rhythm,event,self)};
+	this.rhythm.onkeypress = function(event) {
+        var result = numbersonly(self.rhythm,event);
+        if(result[1] != false) self.init(result[1]);
+        return result[0];
+    }
 	this.options.appendChild(this.playing);
 	this.options.appendChild(this.rhythm);
 	this.div.appendChild(this.options); 
@@ -110,6 +149,7 @@ Nome = function(w,h,beats) {
 		if(b) self.beats = b;
 		self.framesperbeat = max_frame/self.beats;
 		self.pixelsperbeat = self.size.w/self.beats;
+        self.count = [];
 		for(var n=0;n<self.beats;n++) {
 			self.count.push(Math.round(n*self.framesperbeat));
 		}
@@ -186,30 +226,28 @@ function Animator() {
 	}
 }
 
-function numbersonly(field,evt,nome) {
+function numbersonly(field,evt,max_n) {
+  var maxN = max_n || 99;
   var theEvent = evt || window.event;
   var key = theEvent.keyCode || theEvent.which;
   keychar = String.fromCharCode( key );
   if(key == 38) { // up
-   	if(field.value < 99) field.value++;
-   	nome.init(field.value);
-   	return true;
+   	if(field.value < maxN) field.value++;
+   	return [true,field.value];
   }
   else if(key == 40) { // down
    	if(field.value > 1) field.value--;
-   	nome.init(field.value);
-   	return true;
+   	return [true,field.value];
   }
   else  if ((key==null) || (key==0) || (key==8) || 
   	  (key==9) || (key==27) ) // control keys
-  		return true;
+  		return [true,false];
   	 
   else if (key == 13) {
-  	nome.init(field.value);
-  	return false;
+  	return [false,field.value];
   }
   else if(("0123456789").indexOf(keychar) > -1) {
-  		return true;
+  		return [true,false];
   }
   else {
     theEvent.returnValue = false;
