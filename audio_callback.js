@@ -1,7 +1,6 @@
 
 var meters = [1, 2, 3];
 var tickers = new Array();
-var bpm_input;
 
 function clamp(min, max, value) { return Math.max(min, Math.min(max, value)); };
 
@@ -56,13 +55,13 @@ function Ticker(ratio) {
 
     this.flt = audioLib.LP12Filter(this.SAMPLE_RATE, this.ratio * 440, 4);
     var INV_SECONDS_PER_MIN = 1.0 / 60.0;
-    this.meter = (1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / this.SAMPLE_RATE)));
+    this.meter = Math.round((1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / this.SAMPLE_RATE))));
     this.period = Math.round(this.meter / this.ratio);
 
     this.setBPM = function(newBPM) {
         if (newBPM > 0) {
             self.bpm = newBPM;
-            self.meter = 1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / self.SAMPLE_RATE));
+            self.meter = Math.round(1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / self.SAMPLE_RATE)));
             self.period = Math.round(self.meter / self.ratio);
         }
     };
@@ -113,8 +112,9 @@ window.addEventListener('load', function(){
 
     var hr = document.createElement('hr');
     document.getElementById('main').appendChild(hr);
-    setGlobalBPM(80);
-    bpm_input = new NumberInput(80, setGlobalBPM, 1, 500);
+    var START_BPM = 80;
+    setGlobalBPM(START_BPM);
+    var bpm_input = new NumberInput(START_BPM, setGlobalBPM, 1, 500);
 
     // Create an instance of the AudioDevice class
     var dev = audioLib.AudioDevice(audioCallback /* audio callback */, 1 /* channelCount */);
