@@ -2,22 +2,26 @@ $(document).ready(function() {
 
 	master_bpm = 60;
 	fpm = 3600; // assuming 60 frames per second
+    nome_size = {w:400,h:20};
 	is_chrome = /chrome/.test( navigator.userAgent.toLowerCase() );
 	animator = new Animator();
-	var five = new Nome(400,20,5);	
-	var four = new Nome(400,20,4);
-	var master = five;
-	bpm = master_bpm/master.beats;
-	global_bpm = master.beats*bpm;
-	$("#main").sortable();
+    nomes = [];
+    var five = new Nome(nome_size.w,nome_size.h,5);	
+	var four = new Nome(nome_size.w,nome_size.h,4);
+    bpm = Math.round(master_bpm/nomes[0].beats);
+	frame = 0;
+    max_frame = fpm/bpm;
+
+    $("#main").sortable({
+        items: "div:not(.no-sort)"
+        });
 	$("#main").append(five.div);
 	$("#main").append(four.div);
-	$("#main").append("<div id='plus'>+</div>");
+	$("#main").append("<div id='plus' class='no-sort'>+</div>");
 	$("#plus").click(function() {
-		var newnome = new Nome(400,20,2);
+		var newnome = new Nome(nome_size.w,nome_size.h,2);
 		$("#plus").before(newnome.div);
 		newnome.start();
-		newnome.frame = master.frame;
 	});
 	five.start();
 	four.start();
@@ -27,7 +31,10 @@ $(document).ready(function() {
 
 Nome = function(w,h,beats) {
 	var self = this;
+    if(typeof nomes == "undefined") nomes = [];
+    nomes.push(this);
 	this.div = document.createElement("div");
+    this.div.id = "nome-"+(nomes.length-1);
 	this.canvas = document.createElement("canvas");
 	this.options = document.createElement("form");
 	this.playing = document.createElement("input");
@@ -58,7 +65,6 @@ Nome = function(w,h,beats) {
 	this.active = false;
 	this.silent = false;
 	this.sound = new PSound(8);
-	this.frame = 0;
 	this.count = [];
 	this.beats = beats;
 	
@@ -67,14 +73,14 @@ Nome = function(w,h,beats) {
 	}
 	this.draw = function(d) {
 		self.clear();
-		var d = (typeof(d) != "undefined" ? d : Math.floor(self.frame/self.framesperbeat));
+		var d = (typeof(d) != "undefined" ? d : Math.floor(frame/self.framesperbeat));
 		if(!self.silent) {
-			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*self.frame/self.max,self.size.h);
+			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*frame/max_frame,self.size.h);
 			lineargrad.addColorStop(0,"white");
 			lineargrad.addColorStop(1,"green");
 
 			self.ctx.fillStyle = lineargrad;
-			self.ctx.fillRect(0,0,self.size.w*self.frame/self.max,self.size.h);
+			self.ctx.fillRect(0,0,self.size.w*frame/max_frame,self.size.h);
 			self.ctx.fill();
 		}	
 		self.ctx.fillStyle = "red";
@@ -91,33 +97,25 @@ Nome = function(w,h,beats) {
 		}
 	}
 	this.animate = function() {
-		if(self.frame < self.max) {
-			if(!self.silent) self.draw();
-				var ss = self.count.indexOf(self.frame);
-				if(ss > -1) {
-					if(!self.silent) {
-						if(is_chrome) self.sound.play();
-						else self.sound.cloneNode(false).play();
-					}
-			}
-			self.frame++;
-		}
-		else {
-			self.frame = 0;
-		}
+		if(!self.silent) self.draw();
+			var ss = self.count.indexOf(frame);
+			if(ss > -1) {
+				if(!self.silent) {
+					if(is_chrome) self.sound.play();
+					else self.sound.cloneNode(false).play();
+				}
+	        }
 	}
 	this.init = function(b) {
 		if(b) self.beats = b;
-		self.framesperbeat = self.max/self.beats;
+		self.framesperbeat = max_frame/self.beats;
 		self.pixelsperbeat = self.size.w/self.beats;
-		self.count = [];
 		for(var n=0;n<self.beats;n++) {
 			self.count.push(Math.round(n*self.framesperbeat));
 		}
 	}
 		
 	this.start = function() {
-		self.max = fpm/bpm;
 		self.init();
 		self.active = true;
 		animator.enqueue(self);
@@ -155,6 +153,7 @@ function Animator() {
 	}
 	this.start = function() {
 		if(!self.active) {
+            frame = 0;
 			self.active = true;
 			if(!self.timer) self.animate();
 		}
@@ -175,13 +174,15 @@ function Animator() {
   	  	   		self.queue[i].animate();
   	  		  	  	active++;
   	  	  		}
-   		}
-   		if(active != 0) {
-   			window.requestAnimationFrame(self.animate);
-   			self.timer = true;
-   		}
-   		else self.stop();
-   	}
+           }
+           if(frame < max_frame) frame++;
+           else frame = 0;
+           if(active != 0) {
+   	    		window.requestAnimationFrame(self.animate);
+   	    		self.timer = true;
+           }
+           else self.stop();
+       	}
 	}
 }
 
