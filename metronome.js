@@ -42,7 +42,7 @@ $(document).ready(function() {
             playpause.play();
         }
     });
-    $("#bpm").keydown(function(event) {
+    $("#bpm").keypress(function(event) {
         var result = numbersonly(document.getElementById("bpm"),event,999);
         if(result[1]) {
             master_bpm = result[1];
@@ -100,7 +100,7 @@ Nome = function(w,h,beats) {
 	this.rhythm.maxLength = 2;
 	this.rhythm.style.width = "2em";
 	this.rhythm.value = beats;
-	$(this.rhythm).keydown(function(event) {
+	$(this.rhythm).keypress(function(event) {
         var result = numbersonly(self.rhythm,event,99);
         if(result[1]) {
             self.init(result[1]);
