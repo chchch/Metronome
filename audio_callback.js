@@ -1,48 +1,4 @@
 
-var meters = [1, 2, 3];
-var tickers = new Array();
-
-function clamp(min, max, value) { return Math.max(min, Math.min(max, value)); };
-
-function toNumber(field, evt, callback, min, max) {
-  var theEvent = evt || window.event;
-  var key = theEvent.keyCode || theEvent.which;
-  keychar = String.fromCharCode(key);
-  switch (key) {
-    case  38: /* UP */
-        ++field.value;
-        field.value = clamp(min, max, field.value);
-        callback(field.value);
-        return true;
-    case 40: /* DOWN */
-        --field.value;
-        field.value = clamp(min, max, field.value);
-        callback(field.value);
-        return true;
-    case 13: /* Enter */
-        field.value = clamp(min, max, field.value);
-        callback(field.value);
-        return false;
-  }
-  if (("0123456789").indexOf(keychar) > -1)
-      return true;
-}
-
-function NumberInput(value, callback, min, max) {
-    var self = this;
-	this.input = document.createElement("input");
-    this.callback = callback;
-	this.input.type = "text";
-	this.input.value = value;
-	this.input.size = 3;
-	this.input.maxLength = 3;
-	this.input.style.width = "2em";
-	this.div = document.createElement("div");
-	this.div.appendChild(this.input);
-	document.getElementById('main').appendChild(this.div);
-	this.input.onkeypress = function(event) { return toNumber(self.input, event, self.callback, min, max); };
-};
-
 function Ticker(ratio) {
 	var self = this;
     this.active = true;
@@ -72,8 +28,6 @@ function Ticker(ratio) {
         self.setBPM(self.bpm);
     }
 
-	this.meter_input = new NumberInput(self.ratio, self.setRatio, 1, 99);
-
     this.tick = function() {
         while (self.counter >= self.meter) {
             self.counter -= self.meter;
@@ -90,34 +44,23 @@ function Ticker(ratio) {
     }
 };
 
-function audioCallback(buffer, channelCount){
+Ticker.prototype.tickers = new Array();
+
+function audioCallback(buffer, channelCount) {
     /* TODO: update tickers first, then process their output */
     for (var i = 0; i < buffer.length; ++i)  {
         sample = 0.0;
-        for (var t in tickers) {
-            if (tickers[t].active)
-                sample += tickers[t].tick();
+        for (var t in Ticker.prototype.tickers) {
+            if (Ticker.prototype.tickers[t].active)
+                sample += Ticker.prototype.tickers[t].tick();
         }
         buffer[i] = sample;
     }
 }
 
-function setGlobalBPM(bpm) {
-    var bpm = parseInt(bpm);
-    for (var t in tickers)
-        tickers[t].setBPM(bpm);
-}
+function identityCallback(buffer, channelCount) { return buffer; };
 
 window.addEventListener('load', function(){
-    for (var t in meters)
-        tickers[t] = new Ticker(meters[t]);
-
-    var hr = document.createElement('hr');
-    document.getElementById('main').appendChild(hr);
-    var START_BPM = 80;
-    setGlobalBPM(START_BPM);
-    var bpm_input = new NumberInput(START_BPM, setGlobalBPM, 1, 500);
-
     // Create an instance of the AudioDevice class
     var dev = audioLib.AudioDevice(audioCallback /* audio callback */, 1 /* channelCount */);
 }, true);

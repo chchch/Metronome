@@ -69,14 +69,14 @@ $(document).ready(function() {
     InitAll();
 	five.start();
 	four.start();
-
 });
 
 function InitAll() {
-    bpm = master_bpm/nomes[master_nome].beats;
+    var bpm = master_bpm/nomes[master_nome].beats;
     max_frame = Math.round(fpm/bpm);
     for(var n=0;n<nomes.length;n++) {
         nomes[n].init();
+        nomes[n].ticker.setBPM(bpm);
     }
 }
 
@@ -93,13 +93,17 @@ Nome = function(w,h,beats) {
 	this.playing = document.createElement("input");
 	this.playing.type = "checkbox";
 	this.playing.checked = true;
-	this.playing.onclick = function() {self.mute()};
+	this.playing.onclick = function() { self.mute(); };
 	this.rhythm = document.createElement("input");
 	this.rhythm.type = "text";
 	this.rhythm.size = 2;
 	this.rhythm.maxLength = 2;
 	this.rhythm.style.width = "2em";
 	this.rhythm.value = beats;
+    this.ticker = new Ticker(beats);
+    this.ticker.setBPM(master_bpm);
+    Ticker.prototype.tickers.push(this.ticker);
+
 	$(this.rhythm).keypress(function(event) {
         var result = numbersonly(self.rhythm,event,99);
         if(result[1]) {
@@ -129,7 +133,6 @@ Nome = function(w,h,beats) {
 	this.canvas.style.left = 0 + 'px';
 	this.canvas.style.border = "1px solid yellow";
 	this.active = false;
-    this.sound = new PSound(8);
 	this.count = [];
 	this.beats = beats;
 	
@@ -164,10 +167,6 @@ Nome = function(w,h,beats) {
 	this.animate = function() {
 		    self.draw();
 			var ss = self.count.indexOf(frame);
-			if(ss > -1) {
-				if(is_chrome) self.sound.play();
-				else self.sound.cloneNode(false).play();
-	        }
 	}
 	this.init = function(b) {
 		if(b) self.beats = b;
@@ -225,20 +224,6 @@ PlayPause = function(h) {
     this.clear = function() {
         self.ctx.clearRect(0,0,self.size,self.size);
     }
-}
-
-PSound = function(n) {
-	var sine = []; 
-	for (var i=0; i<700;i++) {
-		ii = 128+Math.round(127*Math.sin(i/n)); 
-		sine.push(ii);
-	}
-	var wave = new RIFFWAVE();
-//	wave.header.sampleRate = 44100;
-//	wave.header.numChannels = 2;
-	wave.Make(sine);
-	var audio = new Audio(wave.dataURI);
-	return audio;
 }
 
 function Animator() {
