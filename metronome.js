@@ -22,7 +22,7 @@ $(document).ready(function() {
         style='position:relative;margin:0 auto;width:"+(nome_size.w+130)+"px'> \
         <form style='position:absolute;width:100%;height:"+(nome_size.h+7)+"px; \
         top:-3px; background: grey;left:35px'> \
-        <div style='position:absolute;right:5px'> \
+        <div class='no-sort' style='position:absolute;right:5px'> \
         <input id='bpm' type='text' style='width:2em' size='3' max_length='3' \
         value='60'></input>BPM</div> \
         <div id='playpause' class='no-sort' \
@@ -52,7 +52,7 @@ $(document).ready(function() {
     });
     $("#bpm").keyup(function(event) {
         var result = document.getElementById("bpm").value;
-        if(master_bpm != result) {
+        if(result && master_bpm != result) {
             master_bpm = result;
             InitAll();
         }
@@ -109,7 +109,7 @@ Nome = function(w,h,beats) {
         return result[0];
     });
     $(this.rhythm).keyup(function(event) {
-        if(self.beats != self.rhythm.value) {
+        if(self.rhythm.value && self.beats != self.rhythm.value) {
            self.init(self.rhythm.value);
            if(!animator.active || !self.active) self.draw(-1);
        }
