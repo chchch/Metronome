@@ -45,6 +45,7 @@ function NumberInput(value, callback, min, max) {
 
 function Ticker(ratio) {
 	var self = this;
+    this.active = true;
     this.SAMPLE_RATE = 44100.0;
     this.counter = 0;
     this.beat = 0;
@@ -93,9 +94,10 @@ function audioCallback(buffer, channelCount){
     /* TODO: update tickers first, then process their output */
     for (var i = 0; i < buffer.length; ++i)  {
         sample = 0.0;
-        for (var t in tickers)
-            sample += tickers[t].tick();
-
+        for (var t in tickers) {
+            if (tickers[t].active)
+                sample += tickers[t].tick();
+        }
         buffer[i] = sample;
     }
 }
