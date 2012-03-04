@@ -297,21 +297,18 @@ function numbersonly(field,evt,max_n) {
   var theEvent = evt || window.event;
   var key = theEvent.which || theEvent.keyCode;
   keychar = String.fromCharCode( key );
-  if(key == 38) { // up
-   	if(field.value < maxN) field.value++;
-   	return [true,field.value];
+  if(key == 38 && !theEvent.charCode) { // up
+     	if(field.value < maxN) field.value++;
+    	return [true,field.value];
   }
-  else if(key == 40) { // down
-   	if(field.value > 1) field.value--;
-   	return [true,field.value];
+  else if(key == 40 && !theEvent.charCode) { // down
+   	    if(field.value > 1) field.value--;
+   	    return [true,field.value];
   }
   else  if ((key==null) || (key==0) || (key==8) || 
-  	  (key==9) || (key==27) ) // control keys
+  	            (key==9) || (key==27) ) // control keys
   		return [true,false];
-  	 
-/*    else if (key == 13) {
-  	return false;
-  } */
+  
   else if(("0123456789").indexOf(keychar) > -1) {
   		return [true,false];
   }
