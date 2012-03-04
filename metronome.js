@@ -44,11 +44,18 @@ $(document).ready(function() {
     });
     $("#bpm").keydown(function(event) {
         var result = numbersonly(document.getElementById("bpm"),event,999);
-        if(result[1] != false) {
+        if(result[1]) {
             master_bpm = result[1];
             InitAll();
         }
         return result[0];
+    });
+    $("#bpm").keyup(function(event) {
+        var result = document.getElementById("bpm").value;
+        if(master_bpm != result) {
+            master_bpm = result;
+            InitAll();
+        }
     });
 	$("#main").append(five.div);
 	$("#main").append(four.div);
@@ -62,7 +69,6 @@ $(document).ready(function() {
     InitAll();
 	five.start();
 	four.start();
-//	animator.start();
 
 });
 
@@ -96,8 +102,17 @@ Nome = function(w,h,beats) {
 	this.rhythm.value = beats;
 	$(this.rhythm).keydown(function(event) {
         var result = numbersonly(self.rhythm,event,99);
-        if(result[1] != false) self.init(result[1]);
+        if(result[1]) {
+            self.init(result[1]);
+            if(!animator.active || !self.active) self.draw(-1);
+        }
         return result[0];
+    });
+    $(this.rhythm).keyup(function(event) {
+        if(self.beats != self.rhythm.value) {
+           self.init(self.rhythm.value);
+           if(!animator.active || !self.active) self.draw(-1);
+       }
     });
 	this.options.appendChild(this.playing);
 	this.options.appendChild(this.rhythm);
@@ -114,8 +129,7 @@ Nome = function(w,h,beats) {
 	this.canvas.style.left = 0 + 'px';
 	this.canvas.style.border = "1px solid yellow";
 	this.active = false;
-	this.silent = false;
-	this.sound = new PSound(8);
+    this.sound = new PSound(8);
 	this.count = [];
 	this.beats = beats;
 	
@@ -125,7 +139,7 @@ Nome = function(w,h,beats) {
 	this.draw = function(d) {
 		self.clear();
 		var d = (typeof(d) != "undefined" ? d : Math.floor(frame/self.framesperbeat));
-		if(!self.silent) {
+		if(d >= 0) {
 			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*frame/max_frame,self.size.h);
 			lineargrad.addColorStop(0,"white");
 			lineargrad.addColorStop(1,"green");
@@ -142,19 +156,17 @@ Nome = function(w,h,beats) {
 		self.ctx.fillStyle = "green";
 		if(d<self.beats) {
 			for(var n=d+1;n<self.beats;n++) {
-				self.ctx.fillRect(n*self.pixelsperbeat-1,0,2,self.size.h);
+				self.ctx.fillRect(n*self.pixelsperbeat,0,2,self.size.h);
 			}
 			self.ctx.fill();
 		}
 	}
 	this.animate = function() {
-		if(!self.silent) self.draw();
+		    self.draw();
 			var ss = self.count.indexOf(frame);
 			if(ss > -1) {
-				if(!self.silent) {
-					if(is_chrome) self.sound.play();
-					else self.sound.cloneNode(false).play();
-				}
+				if(is_chrome) self.sound.play();
+				else self.sound.cloneNode(false).play();
 	        }
 	}
 	this.init = function(b) {
@@ -165,19 +177,22 @@ Nome = function(w,h,beats) {
 		for(var n=0;n<self.beats;n++) {
 			self.count.push(Math.round(n*self.framesperbeat));
 		}
-        if(!animator.active) self.draw();
 	}
 		
 	this.start = function() {
+        if(!animator.active) self.draw(-1);
 		self.active = true;
 		animator.enqueue(self);
 	}
 	this.mute = function() {
-		if(!self.silent) {
-		self.silent = true;  
-		self.draw(0);
+		if(self.active) {
+		self.active = false;
+		self.draw(-1);
 		}
-		else self.silent = false;
+		else {
+            self.active = true;
+        }
+        
 	}
 }
 
@@ -280,7 +295,7 @@ function Animator() {
 function numbersonly(field,evt,max_n) {
   var maxN = max_n || 99;
   var theEvent = evt || window.event;
-  var key = theEvent.keyCode || theEvent.which;
+  var key = theEvent.which || theEvent.keyCode;
   keychar = String.fromCharCode( key );
   if(key == 38) { // up
    	if(field.value < maxN) field.value++;
@@ -294,9 +309,9 @@ function numbersonly(field,evt,max_n) {
   	  (key==9) || (key==27) ) // control keys
   		return [true,false];
   	 
-  else if (key == 13) {
-  	return [false,field.value];
-  }
+/*    else if (key == 13) {
+  	return false;
+  } */
   else if(("0123456789").indexOf(keychar) > -1) {
   		return [true,false];
   }
