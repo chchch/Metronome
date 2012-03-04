@@ -2,34 +2,94 @@ $(document).ready(function() {
 
 	master_bpm = 60;
 	fpm = 3600; // assuming 60 frames per second
+    nome_size = {w:400,h:20};
 	is_chrome = /chrome/.test( navigator.userAgent.toLowerCase() );
 	animator = new Animator();
-	var five = new Nome(400,20,5);	
-	var four = new Nome(400,20,4);
-	var master = five;
-	bpm = master_bpm/master.beats;
-	global_bpm = master.beats*bpm;
-	$("#main").sortable();
+    nomes = [];
+    var five = new Nome(nome_size.w,nome_size.h,5);	
+	var four = new Nome(nome_size.w,nome_size.h,4);
+	frame = 0;
+    master_nome = 0;
+
+    $("#main").sortable({
+        items: "div:not(.no-sort)",
+        stop: function(event,ui) {
+                master_nome = $("#main .nome:eq(0)").attr('id').split("-")[1];
+                InitAll();
+             }
+        });
+    $("#main").append("<div class='no-sort' \
+        style='position:relative;margin:0 auto;width:"+(nome_size.w+130)+"px'> \
+        <form style='position:absolute;width:100%;height:"+(nome_size.h+7)+"px; \
+        top:-3px; background: grey;left:35px'> \
+        <div class='no-sort' style='position:absolute;right:5px'> \
+        <input id='bpm' type='text' style='width:2em' size='3' max_length='3' \
+        value='60'></input>BPM</div> \
+        <div id='playpause' class='no-sort' \
+        style='position:absolute;right:0px;top:"+(nome_size.h+10)+"px;height:20px; \
+        '></div> \
+        </form></div>");
+    playpause = new PlayPause(nome_size.h/2);
+    playpause.play();
+    $("#playpause").append(playpause.canvas);
+    $("#playpause").click(function() {
+        if(!animator.active) {
+            animator.pause();
+            playpause.pause();
+        }
+        else {
+            animator.pause();
+            playpause.play();
+        }
+    });
+    $("#bpm").keydown(function(event) {
+        var result = numbersonly(document.getElementById("bpm"),event,999);
+        if(result[1]) {
+            master_bpm = result[1];
+            InitAll();
+        }
+        return result[0];
+    });
+    $("#bpm").keyup(function(event) {
+        var result = document.getElementById("bpm").value;
+        if(result && master_bpm != result) {
+            master_bpm = result;
+            InitAll();
+        }
+    });
 	$("#main").append(five.div);
 	$("#main").append(four.div);
-	$("#main").append("<div id='plus'>+</div>");
+	$("#main").append("<div id='plus' class='no-sort'>+</div>");
 	$("#plus").click(function() {
-		var newnome = new Nome(400,20,2);
+		var newnome = new Nome(nome_size.w,nome_size.h,2);
 		$("#plus").before(newnome.div);
+        newnome.init();
 		newnome.start();
-		newnome.frame = master.frame;
 	});
+    InitAll();
 	five.start();
 	four.start();
-	animator.start();
 
 });
 
+function InitAll() {
+    bpm = master_bpm/nomes[master_nome].beats;
+    max_frame = Math.round(fpm/bpm);
+    for(var n=0;n<nomes.length;n++) {
+        nomes[n].init();
+    }
+}
+
 Nome = function(w,h,beats) {
 	var self = this;
+    nomes = nomes || [];
+    nomes.push(this);
 	this.div = document.createElement("div");
-	this.canvas = document.createElement("canvas");
+    this.div.id = "nome-"+(nomes.length-1);
+	this.div.className = "nome";
+    this.canvas = document.createElement("canvas");
 	this.options = document.createElement("form");
+    this.options.style.paddingRight = "5px";
 	this.playing = document.createElement("input");
 	this.playing.type = "checkbox";
 	this.playing.checked = true;
@@ -40,7 +100,20 @@ Nome = function(w,h,beats) {
 	this.rhythm.maxLength = 2;
 	this.rhythm.style.width = "2em";
 	this.rhythm.value = beats;
-	this.rhythm.onkeypress = function(event) {return numbersonly(self.rhythm,event,self)};
+	$(this.rhythm).keydown(function(event) {
+        var result = numbersonly(self.rhythm,event,99);
+        if(result[1]) {
+            self.init(result[1]);
+            if(!animator.active || !self.active) self.draw(-1);
+        }
+        return result[0];
+    });
+    $(this.rhythm).keyup(function(event) {
+        if(self.rhythm.value && self.beats != self.rhythm.value) {
+           self.init(self.rhythm.value);
+           if(!animator.active || !self.active) self.draw(-1);
+       }
+    });
 	this.options.appendChild(this.playing);
 	this.options.appendChild(this.rhythm);
 	this.div.appendChild(this.options); 
@@ -56,9 +129,7 @@ Nome = function(w,h,beats) {
 	this.canvas.style.left = 0 + 'px';
 	this.canvas.style.border = "1px solid yellow";
 	this.active = false;
-	this.silent = false;
-	this.sound = new PSound(8);
-	this.frame = 0;
+    this.sound = new PSound(8);
 	this.count = [];
 	this.beats = beats;
 	
@@ -67,68 +138,93 @@ Nome = function(w,h,beats) {
 	}
 	this.draw = function(d) {
 		self.clear();
-		var d = (typeof(d) != "undefined" ? d : Math.floor(self.frame/self.framesperbeat));
-		if(!self.silent) {
-			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*self.frame/self.max,self.size.h);
+		var d = (typeof(d) != "undefined" ? d : Math.floor(frame/self.framesperbeat));
+		if(d >= 0) {
+			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*frame/max_frame,self.size.h);
 			lineargrad.addColorStop(0,"white");
 			lineargrad.addColorStop(1,"green");
 
 			self.ctx.fillStyle = lineargrad;
-			self.ctx.fillRect(0,0,self.size.w*self.frame/self.max,self.size.h);
+			self.ctx.fillRect(0,0,self.size.w*frame/max_frame,self.size.h);
 			self.ctx.fill();
 		}	
 		self.ctx.fillStyle = "red";
 		for(var n=0;n<=d;n++) {
-			self.ctx.fillRect(n*self.pixelsperbeat-1,0,2,self.size.h);
+			self.ctx.fillRect(n*self.pixelsperbeat,0,2,self.size.h);
 		}
 		self.ctx.fill();
 		self.ctx.fillStyle = "green";
 		if(d<self.beats) {
 			for(var n=d+1;n<self.beats;n++) {
-				self.ctx.fillRect(n*self.pixelsperbeat-1,0,2,self.size.h);
+				self.ctx.fillRect(n*self.pixelsperbeat,0,2,self.size.h);
 			}
 			self.ctx.fill();
 		}
 	}
 	this.animate = function() {
-		if(self.frame < self.max) {
-			if(!self.silent) self.draw();
-				var ss = self.count.indexOf(self.frame);
-				if(ss > -1) {
-					if(!self.silent) {
-						if(is_chrome) self.sound.play();
-						else self.sound.cloneNode(false).play();
-					}
-			}
-			self.frame++;
-		}
-		else {
-			self.frame = 0;
-		}
+		    self.draw();
+			var ss = self.count.indexOf(frame);
+			if(ss > -1) {
+				if(is_chrome) self.sound.play();
+				else self.sound.cloneNode(false).play();
+	        }
 	}
 	this.init = function(b) {
 		if(b) self.beats = b;
-		self.framesperbeat = self.max/self.beats;
+		self.framesperbeat = max_frame/self.beats;
 		self.pixelsperbeat = self.size.w/self.beats;
-		self.count = [];
+        self.count = [];
 		for(var n=0;n<self.beats;n++) {
 			self.count.push(Math.round(n*self.framesperbeat));
 		}
 	}
 		
 	this.start = function() {
-		self.max = fpm/bpm;
-		self.init();
+        if(!animator.active) self.draw(-1);
 		self.active = true;
 		animator.enqueue(self);
 	}
 	this.mute = function() {
-		if(!self.silent) {
-		self.silent = true;  
-		self.draw(0);
+		if(self.active) {
+		self.active = false;
+		self.draw(-1);
 		}
-		else self.silent = false;
+		else {
+            self.active = true;
+        }
+        
 	}
+}
+
+PlayPause = function(h) {
+    var self = this;
+    this.canvas = document.createElement("canvas");
+    this.canvas.width = h;
+    this.canvas.height = h;
+    this.size = h;
+    this.canvas.style.width = h + "px";
+    this.canvas.style.height = h + "px";
+    this.ctx = this.canvas.getContext('2d');
+    this.color = "black";
+    this.play = function() {
+        self.ctx.clearRect(0,0,self.size,self.size);
+        self.ctx.fillStyle = self.color;
+        self.ctx.beginPath();
+        self.ctx.moveTo(0,0);
+        self.ctx.lineTo(self.size,self.size/2);
+        self.ctx.lineTo(0,self.size);
+        self.ctx.closePath();
+        self.ctx.fill();
+    }
+    this.pause = function() {
+        self.ctx.clearRect(0,0,self.size,self.size);
+        self.ctx.fillStyle = self.color;
+        self.ctx.fillRect(0,0,self.size/2.5,self.size);
+        self.ctx.fillRect(self.size,0,-self.size/2.5,self.size);
+    }
+    this.clear = function() {
+        self.ctx.clearRect(0,0,self.size,self.size);
+    }
 }
 
 PSound = function(n) {
@@ -155,10 +251,19 @@ function Animator() {
 	}
 	this.start = function() {
 		if(!self.active) {
+            frame = 0;
 			self.active = true;
 			if(!self.timer) self.animate();
 		}
 	}
+    this.pause = function() {
+        if(!self.active) {
+            self.active = true;
+            if(!self.timer) self.animate();
+        } else {
+            self.stop();
+        }
+    }
 	this.stop = function() {
 		self.active = false;
 		self.timer = false;
@@ -175,40 +280,40 @@ function Animator() {
   	  	   		self.queue[i].animate();
   	  		  	  	active++;
   	  	  		}
-   		}
-   		if(active != 0) {
-   			window.requestAnimationFrame(self.animate);
-   			self.timer = true;
-   		}
-   		else self.stop();
-   	}
+           }
+           if(frame < max_frame) frame++;
+           else frame = 0;
+           if(active != 0) {
+   	    		window.requestAnimationFrame(self.animate);
+   	    		self.timer = true;
+           }
+           else self.stop();
+       	}
 	}
 }
 
-function numbersonly(field,evt,nome) {
+function numbersonly(field,evt,max_n) {
+  var maxN = max_n || 99;
   var theEvent = evt || window.event;
-  var key = theEvent.keyCode || theEvent.which;
+  var key = theEvent.which || theEvent.keyCode;
   keychar = String.fromCharCode( key );
   if(key == 38) { // up
-   	if(field.value < 99) field.value++;
-   	nome.init(field.value);
-   	return true;
+   	if(field.value < maxN) field.value++;
+   	return [true,field.value];
   }
   else if(key == 40) { // down
    	if(field.value > 1) field.value--;
-   	nome.init(field.value);
-   	return true;
+   	return [true,field.value];
   }
   else  if ((key==null) || (key==0) || (key==8) || 
   	  (key==9) || (key==27) ) // control keys
-  		return true;
+  		return [true,false];
   	 
-  else if (key == 13) {
-  	nome.init(field.value);
+/*    else if (key == 13) {
   	return false;
-  }
+  } */
   else if(("0123456789").indexOf(keychar) > -1) {
-  		return true;
+  		return [true,false];
   }
   else {
     theEvent.returnValue = false;
