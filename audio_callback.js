@@ -32,6 +32,7 @@ function Ticker(ratio) {
         while (self.counter >= self.meter) {
             self.counter -= self.meter;
             self.beat = 0;
+            frame = 0;
         }
         if (self.counter % self.period == 0) {
             self.nextSample = 1;
@@ -59,11 +60,3 @@ function audioCallback(buffer, channelCount) {
 }
 
 function identityCallback(buffer, channelCount) { return buffer; };
-
-var last = 0;
-Sink.doInterval(function(){ 
-    // Get the tick we're at based on latency or zero if output hasn't been initialized yet 
-    if (last > Ticker.prototype.tickers[0].counter)
-        frame = 0;
-    last = Ticker.prototype.tickers[0].counter;
-}, 1000/60); 

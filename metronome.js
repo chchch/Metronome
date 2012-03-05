@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var dev = audioLib.AudioDevice(audioCallback, 1 /* channelCount */);
+    dev = audioLib.AudioDevice(audioCallback, 1 /* channelCount */);
 	master_bpm = 60;
 	fpm = 3600; // assuming 60 frames per second
     nome_size = {w:400,h:20};
@@ -72,7 +72,7 @@ $(document).ready(function() {
 });
 
 function InitAll() {
-    var bpm = master_bpm/nomes[master_nome].beats;
+    var bpm = master_bpm / nomes[master_nome].beats;
     max_frame = Math.round(fpm/bpm);
     for(var n=0;n<nomes.length;n++) {
         nomes[n].init();
@@ -108,6 +108,7 @@ Nome = function(w,h,beats) {
         var result = numbersonly(self.rhythm,event,99);
         if(result[1]) {
             self.init(result[1]);
+            self.ticker.setRatio(result[1]);
             if(!animator.active || !self.active) self.draw(-1);
         }
         return result[0];
@@ -133,7 +134,6 @@ Nome = function(w,h,beats) {
 	this.canvas.style.left = 0 + 'px';
 	this.canvas.style.border = "1px solid yellow";
 	this.active = false;
-	this.count = [];
 	this.beats = beats;
 	
 	this.clear = function() {
@@ -166,16 +166,11 @@ Nome = function(w,h,beats) {
 	}
 	this.animate = function() {
 		    self.draw();
-			var ss = self.count.indexOf(frame);
 	}
 	this.init = function(b) {
 		if(b) self.beats = b;
 		self.framesperbeat = max_frame/self.beats;
 		self.pixelsperbeat = self.size.w/self.beats;
-        self.count = [];
-		for(var n=0;n<self.beats;n++) {
-			self.count.push(Math.round(n*self.framesperbeat));
-		}
 	}
 		
 	this.start = function() {
