@@ -2,23 +2,22 @@
 function Ticker(ratio) {
 	var self = this;
     this.active = true;
-    this.SAMPLE_RATE = 44100.0;
     this.counter = 0;
     this.beat = 0;
     this.ratio = ratio;
     this.nextSample = 0;
-    this.bpm = 30.0;
+    this.bpm = 1;
     this.period = 0;
 
-    this.flt = audioLib.LP12Filter(this.SAMPLE_RATE, this.ratio * 440, 4);
+    this.flt = audioLib.LP12Filter(dev.sampleRate, this.ratio * 440, 4);
     var INV_SECONDS_PER_MIN = 1.0 / 60.0;
-    this.meter = Math.round((1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / this.SAMPLE_RATE))));
+    this.meter = Math.round((1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate))));
     this.period = Math.round(this.meter / this.ratio);
 
     this.setBPM = function(newBPM) {
         if (newBPM > 0) {
             self.bpm = newBPM;
-            self.meter = Math.round(1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / self.SAMPLE_RATE)));
+            self.meter = Math.round(1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate)));
             self.period = Math.round(self.meter / self.ratio);
         }
     };
