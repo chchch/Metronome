@@ -143,12 +143,13 @@ Nome = function(w,h,beats) {
 		self.clear();
 		var d = (typeof(d) != "undefined" ? d : Math.floor(frame/self.framesperbeat));
 		if(d >= 0) {
-			var lineargrad = self.ctx.createLinearGradient(0,0,self.size.w*frame/max_frame,self.size.h);
+            var x = self.size.w * frame / max_frame;
+            var lineargrad = self.ctx.createLinearGradient(0,0,x,self.size.h);
 			lineargrad.addColorStop(0,"white");
 			lineargrad.addColorStop(1,"green");
 
 			self.ctx.fillStyle = lineargrad;
-			self.ctx.fillRect(0,0,self.size.w*frame/max_frame,self.size.h);
+			self.ctx.fillRect(0,0,x,self.size.h);
 			self.ctx.fill();
 		}	
 		self.ctx.fillStyle = "red";
