@@ -60,7 +60,10 @@ function audioCallback(buffer, channelCount) {
 
 function identityCallback(buffer, channelCount) { return buffer; };
 
-window.addEventListener('load', function(){
-    // Create an instance of the AudioDevice class
-    var dev = audioLib.AudioDevice(audioCallback /* audio callback */, 1 /* channelCount */);
-}, true);
+var last = 0;
+Sink.doInterval(function(){ 
+    // Get the tick we're at based on latency or zero if output hasn't been initialized yet 
+    if (last > Ticker.prototype.tickers[0].counter)
+        frame = 0;
+    last = Ticker.prototype.tickers[0].counter;
+}, 1000/60); 

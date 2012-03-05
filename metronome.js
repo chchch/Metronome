@@ -1,5 +1,5 @@
 $(document).ready(function() {
-
+    var dev = audioLib.AudioDevice(audioCallback, 1 /* channelCount */);
 	master_bpm = 60;
 	fpm = 3600; // assuming 60 frames per second
     nome_size = {w:400,h:20};
@@ -214,12 +214,16 @@ PlayPause = function(h) {
         self.ctx.lineTo(0,self.size);
         self.ctx.closePath();
         self.ctx.fill();
+        for (n in nomes)
+            nomes[n].ticker.active = false;
     }
     this.pause = function() {
         self.ctx.clearRect(0,0,self.size,self.size);
         self.ctx.fillStyle = self.color;
         self.ctx.fillRect(0,0,self.size/2.5,self.size);
         self.ctx.fillRect(self.size,0,-self.size/2.5,self.size);
+        for (n in nomes)
+            nomes[n].ticker.active = true;
     }
     this.clear = function() {
         self.ctx.clearRect(0,0,self.size,self.size);
@@ -266,8 +270,8 @@ function Animator() {
   	  		  	  	active++;
   	  	  		}
            }
-           if(frame < max_frame) frame++;
-           else frame = 0;
+           if (frame < max_frame) frame++;
+           //else frame = 0;
            if(active != 0) {
    	    		window.requestAnimationFrame(self.animate);
    	    		self.timer = true;
@@ -300,6 +304,7 @@ function numbersonly(field,evt,max_n) {
   else {
     theEvent.returnValue = false;
     if(theEvent.preventDefault) theEvent.preventDefault();
+    return [false, false];
   }
 }
 
