@@ -50,7 +50,7 @@ function audioCallback(buffer, channelCount) {
     /* TODO: update tickers first, then process their output */
     for (var i = 0; i < buffer.length; ++i)  {
         sample = 0.0;
-        for (var t in Ticker.prototype.tickers) {
+        for (var t = 0; t < Ticker.prototype.tickers.length; ++t) {
             if (Ticker.prototype.tickers[t].active)
                 sample += Ticker.prototype.tickers[t].tick();
         }
