@@ -31,7 +31,6 @@ function Ticker(ratio) {
         while (self.counter >= self.meter) {
             self.counter -= self.meter;
             self.beat = 0;
-            frame = 0;
         }
         if (self.counter % self.period == 0) {
             self.nextSample = 1;
@@ -58,4 +57,16 @@ function audioCallback(buffer, channelCount) {
     }
 }
 
-function identityCallback(buffer, channelCount) { return buffer; };
+/* callback function that is used to roughly sync the audio and the gui */
+var reset = true;
+Sink.doInterval(function(){
+    if (Ticker.prototype.tickers[master_nome].beat == 1) {
+        if (reset) {
+            frame = 0;
+            reset = false;
+        }
+    } else {
+        reset = true;
+    }
+    frame++;
+}, 1000/60);
