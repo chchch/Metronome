@@ -36,7 +36,9 @@ function Ticker(ratio) {
             self.nextSample = 1;
             ++self.beat;
         }
-        result = self.flt.pushSample(self.nextSample);
+        var result = 0.0
+        if (self.active)
+            result = self.flt.pushSample(self.nextSample);
         self.nextSample = 0;
         ++self.counter;
         return result;
@@ -50,8 +52,7 @@ function audioCallback(buffer, channelCount) {
     for (var i = 0; i < buffer.length; ++i)  {
         sample = 0.0;
         for (var t = 0; t < Ticker.prototype.tickers.length; ++t) {
-            if (Ticker.prototype.tickers[t].active)
-                sample += Ticker.prototype.tickers[t].tick();
+            sample += Ticker.prototype.tickers[t].tick();
         }
         buffer[i] = sample;
     }
@@ -69,4 +70,4 @@ Sink.doInterval(function(){
         reset = true;
     }
     frame++;
-}, 1000/60);
+}, 1000.0/60.0);

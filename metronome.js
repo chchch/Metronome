@@ -65,9 +65,9 @@ $(document).ready(function() {
         InitAll();
         newnome.start();
     });
-    InitAll();
     five.start();
     four.start();
+    InitAll();
 });
 
 function InitAll() {
@@ -75,6 +75,7 @@ function InitAll() {
     max_frame = Math.round(fpm / bpm);
     for (var n = 0; n < nomes.length; ++n) {
         nomes[n].init();
+        nomes[n].ticker.counter = Ticker.prototype.tickers[master_nome].counter;
         nomes[n].ticker.setBPM(bpm);
     }
 }
@@ -178,12 +179,10 @@ Nome = function(w, h, beats) {
         animator.enqueue(self);
     }
     this.mute = function() {
-        if (self.active) {
-            self.active = false;
+        self.active = !self.active;
+        self.ticker.active = self.active;
+        if (!self.active)
             self.draw(-1);
-        } else {
-            self.active = true;
-        }
     }
 }
 
