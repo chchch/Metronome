@@ -214,7 +214,7 @@ PlayPause = function(h) {
         self.ctx.fillRect(0, 0, self.size / 2.5, self.size);
         self.ctx.fillRect(self.size, 0, -self.size / 2.5, self.size);
         for (var n in nomes)
-            nomes[n].ticker.active = true;
+            nomes[n].ticker.active = nomes[n].active;
     }
     this.clear = function() {
         self.ctx.clearRect(0, 0, self.size, self.size);
