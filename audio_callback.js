@@ -11,14 +11,14 @@ function Ticker(ratio) {
 
     this.flt = audioLib.LP12Filter(dev.sampleRate, this.ratio * 440, 4);
     var INV_SECONDS_PER_MIN = 1.0 / 60.0;
-    this.meter = Math.round((1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate))));
+    this.measure_length = Math.round((1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate))));
     this.period = Math.round(this.meter / this.ratio);
 
     this.setBPM = function(newBPM) {
         if (newBPM > 0) {
             self.bpm = newBPM;
-            self.meter = Math.round(1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate)));
-            self.period = Math.round(self.meter / self.ratio);
+            self.measure_length = Math.round(1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate)));
+            self.period = Math.round(self.measure_length / self.ratio);
         }
     };
 
@@ -28,8 +28,8 @@ function Ticker(ratio) {
     }
 
     this.tick = function() {
-        while (self.counter >= self.meter) {
-            self.counter -= self.meter;
+        while (self.counter >= self.measure_length) {
+            self.counter -= self.measure_length;
             self.beat = 0;
         }
         if (self.counter % self.period == 0) {
@@ -69,5 +69,5 @@ Sink.doInterval(function(){
     } else {
         reset = true;
     }
-    frame++;
+    ++frame;
 }, 1000.0/60.0);
