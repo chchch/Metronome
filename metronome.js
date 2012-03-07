@@ -73,11 +73,10 @@ $(document).ready(function() {
 function InitAll() {
     var bpm = master_bpm / nomes[master_nome].beats;
     max_frame = Math.round(fpm / bpm);
-    for (var n = 0; n < nomes.length; ++n) {
+    for (var n = 0; n < nomes.length; ++n)
         nomes[n].init();
-        nomes[n].ticker.counter = Ticker.prototype.tickers[master_nome].counter;
-        nomes[n].ticker.setBPM(bpm);
-    }
+
+    Ticker.prototype.setBPM(bpm);
 }
 
 Nome = function(w, h, beats) {
@@ -101,7 +100,6 @@ Nome = function(w, h, beats) {
     this.rhythm.style.width = "2em";
     this.rhythm.value = beats;
     this.ticker = new Ticker(beats);
-    this.ticker.setBPM(master_bpm);
     Ticker.prototype.tickers.push(this.ticker);
 
     $(this.rhythm).keypress(function(event) {
