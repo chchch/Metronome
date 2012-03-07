@@ -1,47 +1,51 @@
+Ticker.prototype.bpm = 60;
+Ticker.prototype.counter = 0;
+Ticker.prototype.measure_length = 1;
+Ticker.prototype.INV_SECONDS_PER_MIN = 1.0 / 60.0;
 
 function Ticker(ratio) {
 	var self = this;
     this.active = true;
-    this.counter = 0;
     this.beat = 0;
     this.ratio = ratio;
     this.nextSample = 0;
-    this.bpm = 1;
     this.period = 0;
 
     this.flt = audioLib.LP12Filter(dev.sampleRate, this.ratio * 440, 4);
-    var INV_SECONDS_PER_MIN = 1.0 / 60.0;
-    this.measure_length = Math.round((1.0 / (this.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate))));
-    this.period = Math.round(this.meter / this.ratio);
+    this.period = 0
 
-    this.setBPM = function(newBPM) {
-        if (newBPM > 0) {
-            self.bpm = newBPM;
-            self.measure_length = Math.round(1.0 / (self.bpm * INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate)));
-            self.period = Math.round(self.measure_length / self.ratio);
-        }
+    this.bpmUpdated = function() {
+        self.period = Math.round(Ticker.prototype.measure_length / self.ratio);
     };
 
     this.setRatio = function(ratio) {
         self.ratio = ratio;
-        self.setBPM(self.bpm);
+        self.bpmUpdated()
     }
 
     this.tick = function() {
-        while (self.counter >= self.measure_length) {
-            self.counter -= self.measure_length;
+        while (Ticker.prototype.counter >= Ticker.prototype.measure_length) {
+            Ticker.prototype.counter -= Ticker.prototype.measure_length;
             self.beat = 0;
         }
-        if (self.counter % self.period == 0) {
-            self.nextSample = 1;
+        if (Ticker.prototype.counter % self.period == 0) {
+            self.nextSample = 1.0;
             ++self.beat;
         }
         var result = 0.0
         if (self.active)
             result = self.flt.pushSample(self.nextSample);
-        self.nextSample = 0;
-        ++self.counter;
+        self.nextSample = 0.0;
         return result;
+    }
+};
+
+Ticker.prototype.setBPM = function(newBPM) {
+    if (newBPM > 0) {
+        Ticker.prototype.bpm = newBPM;
+        Ticker.prototype.measure_length = Math.round(1.0 / (Ticker.prototype.bpm * Ticker.prototype.INV_SECONDS_PER_MIN * (1.0 / dev.sampleRate)));
+        for (var t = 0; t < Ticker.prototype.tickers.length; ++t)
+            Ticker.prototype.tickers[t].bpmUpdated();
     }
 };
 
@@ -54,6 +58,7 @@ function audioCallback(buffer, channelCount) {
         for (var t = 0; t < Ticker.prototype.tickers.length; ++t) {
             sample += Ticker.prototype.tickers[t].tick();
         }
+        ++Ticker.prototype.counter;
         buffer[i] = sample;
     }
 }
