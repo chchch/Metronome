@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    dev = audioLib.AudioDevice(audioCallback, 1 /* channelCount */);
+    dev = audioLib.Sink(audioCallback, 1 /* channelCount */);
     master_bpm = 60;
     fpm = 3600; // assuming 60 frames per second
     nome_size = {w:400, h:20};
