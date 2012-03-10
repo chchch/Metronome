@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    dev = audioLib.AudioDevice(audioCallback, 1 /* channelCount */);
+    dev = audioLib.Sink(audioCallback, 1 /* channelCount */);
     master_bpm = 60;
     fpm = 3600; // assuming 60 frames per second
     nome_size = {w:400, h:20};
@@ -203,16 +203,14 @@ PlayPause = function(h) {
         self.ctx.lineTo(0, self.size);
         self.ctx.closePath();
         self.ctx.fill();
-        for (var n in nomes)
-            nomes[n].ticker.active = false;
+        Ticker.prototype.playing = false;
     }
     this.pause = function() {
         self.ctx.clearRect(0, 0, self.size, self.size);
         self.ctx.fillStyle = self.color;
         self.ctx.fillRect(0, 0, self.size / 2.5, self.size);
         self.ctx.fillRect(self.size, 0, -self.size / 2.5, self.size);
-        for (var n in nomes)
-            nomes[n].ticker.active = nomes[n].active;
+        Ticker.prototype.playing = true;
     }
     this.clear = function() {
         self.ctx.clearRect(0, 0, self.size, self.size);
