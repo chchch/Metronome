@@ -69,6 +69,10 @@ Sink.doInterval(function(){
     if (!Ticker.prototype.playing)
         return;
     frame = frame + 1;
-    while (frame >= max_frame)
+    /* if we're at the end of the measure, reset the drawing position */
+    if (frame >= max_frame) {
         frame -= max_frame;
+        for (var i = 0; i < nomes.length; ++i)
+            nomes[i].clear()
+    }
 }, 1000.0/60.0);
