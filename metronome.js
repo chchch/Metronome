@@ -138,32 +138,32 @@ Nome = function(w, h, beats) {
         self.ctx.clearRect(0, 0, self.size.w, self.size.h);
     }
     this.draw = function(d) {
-        var d = (typeof(d) != "undefined" ? d : Math.floor(frame / self.framesperbeat));
-        if (d >= 0) {
+        var pos = (typeof(d) != "undefined" ? d : Math.floor(frame / self.framesperbeat));
+        if (pos >= 0) {
             var x = self.size.w * frame / max_frame;
             var lineargrad = self.ctx.createLinearGradient(0, 0, x, self.size.h);
             lineargrad.addColorStop(0, "white");
             lineargrad.addColorStop(1, "green");
 
             self.ctx.fillStyle = lineargrad;
-            self.ctx.fillRect(0,0,x,self.size.h);
+            self.ctx.fillRect(0, 0, x, self.size.h);
             self.ctx.fill();
         }
         self.ctx.fillStyle = "red";
-        for (var n = 0; n <= d; ++n)
+        for (var n = 0; n <= pos; ++n)
             self.ctx.fillRect(n * self.pixelsperbeat, 0, 2, self.size.h);
 
         self.ctx.fill();
         self.ctx.fillStyle = "green";
-        if (d < self.beats) {
-            for (var n = d + 1; n < self.beats; ++n)
-                self.ctx.fillRect(n*self.pixelsperbeat,0,2,self.size.h);
+        if (pos < self.beats) {
+            for (var n = pos + 1; n < self.beats; ++n)
+                self.ctx.fillRect(n * self.pixelsperbeat, 0, 2, self.size.h);
             self.ctx.fill();
         }
     }
-    this.animate = function() {
-            self.draw();
-    }
+
+    this.animate = self.draw;
+
     this.init = function(b) {
         if (b) self.beats = b;
         self.framesperbeat = Math.ceil(max_frame / self.beats);
