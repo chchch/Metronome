@@ -138,7 +138,6 @@ Nome = function(w, h, beats) {
         self.ctx.clearRect(0, 0, self.size.w, self.size.h);
     }
     this.draw = function(d) {
-        self.clear();
         var d = (typeof(d) != "undefined" ? d : Math.floor(frame / self.framesperbeat));
         if (d >= 0) {
             var x = self.size.w * frame / max_frame;
