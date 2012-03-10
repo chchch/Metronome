@@ -1,7 +1,6 @@
 function Ticker(ratio) {
 	var self = this;
     this.active = true;
-    this.beat = 0;
     this.ratio = ratio;
     this.nextSample = 0;
     this.period = 0;
@@ -18,13 +17,8 @@ function Ticker(ratio) {
     };
 
     this.tick = function() {
-        while (Ticker.prototype.counter >= Ticker.prototype.measure_length) {
-            Ticker.prototype.counter -= Ticker.prototype.measure_length;
-            self.beat = 0;
-        }
         if (Ticker.prototype.counter % self.period === 0) {
             self.nextSample = 1.0;
-            self.beat += 1;
         }
         var result = 0.0;
         if (self.active) {
@@ -55,12 +49,15 @@ Ticker.prototype.tickers = [];
 function audioCallback(buffer, channelCount) {
     /* TODO: update tickers first, then process their output */
     for (var i = 0; i < buffer.length; ++i)  {
+        while (Ticker.prototype.counter >= Ticker.prototype.measure_length) {
+            Ticker.prototype.counter -= Ticker.prototype.measure_length;
+        }
         sample = 0.0;
         for (var t = 0; t < Ticker.prototype.tickers.length; ++t) {
             sample += Ticker.prototype.tickers[t].tick();
         }
-        ++Ticker.prototype.counter;
         buffer[i] = sample;
+        ++Ticker.prototype.counter;
     }
 }
 
