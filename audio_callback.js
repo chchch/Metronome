@@ -2,7 +2,7 @@ function Ticker(ratio) {
 	var self = this;
     this.active = true;
     this.ratio = ratio;
-    this.nextSample = 0;
+    this.nextSample = 0.0;
     this.period = 0;
 
     this.flt = audioLib.LP12Filter(dev.sampleRate, this.ratio * 440, 4);
@@ -29,6 +29,7 @@ function Ticker(ratio) {
     };
 }
 
+Ticker.prototype.playing = false;
 Ticker.prototype.bpm = 60;
 Ticker.prototype.counter = 0;
 Ticker.prototype.measure_length = 1;
@@ -48,11 +49,13 @@ Ticker.prototype.tickers = [];
 
 function audioCallback(buffer, channelCount) {
     /* TODO: update tickers first, then process their output */
+    if (!Ticker.prototype.playing)
+        return;
     for (var i = 0; i < buffer.length; ++i)  {
         while (Ticker.prototype.counter >= Ticker.prototype.measure_length) {
             Ticker.prototype.counter -= Ticker.prototype.measure_length;
         }
-        sample = 0.0;
+        sample = 0.0
         for (var t = 0; t < Ticker.prototype.tickers.length; ++t) {
             sample += Ticker.prototype.tickers[t].tick();
         }
@@ -63,6 +66,8 @@ function audioCallback(buffer, channelCount) {
 
 /* callback function that is used to roughly sync the audio and the gui */
 Sink.doInterval(function(){
+    if (!Ticker.prototype.playing)
+        return;
     frame = frame + 1;
     while (frame >= max_frame)
         frame -= max_frame;
