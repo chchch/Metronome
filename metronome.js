@@ -261,7 +261,11 @@ function Animator() {
            var curtime = dev.getPlaybackTime()/dev.sampleRate;
            var increment = (curtime-self.lasttime);
            if(frame < max_frame) frame += (increment/secondspermeasure)*max_frame;
-           else frame = 0;
+           else {
+                var ticker = nomes[master_nome].ticker;
+                var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
+                frame = percentdone*max_frame;
+           }
            self.lasttime = curtime;
            var active = 0;
            for (var i = 0, j = self.queue.length; i < j; i++) {
