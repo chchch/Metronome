@@ -24,7 +24,7 @@ $(document).ready(function() {
         top:-3px; background: grey;left:35px'> \
         <div class='no-sort' style='position:absolute;right:5px'> \
         <input id='bpm' type='text' style='width:2em' size='3' max_length='3' \
-        value='60'></input>BPM</div> \
+        value='"+master_bpm+"'></input>BPM</div> \
         <div id='playpause' class='no-sort' \
         style='position:absolute;right:0px;top:"+(nome_size.h+10)+"px;height:20px; \
         '></div> \
@@ -65,9 +65,9 @@ $(document).ready(function() {
         InitAll();
         newnome.start();
     });
+    InitAll();
     five.start();
     four.start();
-    InitAll();
 });
 
 function InitAll() {
@@ -138,6 +138,7 @@ Nome = function(w, h, beats) {
         self.ctx.clearRect(0, 0, self.size.w, self.size.h);
     }
     this.draw = function(d) {
+        self.clear();
         var pos = (typeof(d) != "undefined" ? d : Math.floor(frame / self.framesperbeat));
         if (pos >= 0) {
             var x = self.size.w * frame / max_frame;
@@ -234,6 +235,10 @@ function Animator() {
     this.pause = function() {
         if (!self.active) {
             self.active = true;
+            animator.lasttime = dev.getPlaybackTime()/dev.sampleRate;
+            var ticker = nomes[master_nome].ticker;
+            var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
+            frame = percentdone*max_frame;
             if (!self.timer) self.animate();
         } else {
             self.stop();
@@ -246,11 +251,18 @@ function Animator() {
     this.clear = function() {
         self.queue = [];
     }
+    this.lasttime = 0;
     this.animate = function() {
         self.timer = false;
         if (self.active) {
-           //if (frame < max_frame) ++frame;
-           //else frame -= max_frame;
+//            if (frame < max_frame) ++frame;
+//           else frame -= max_frame;
+           var secondspermeasure = 1/(master_bpm/60)*nomes[master_nome].beats;
+           var curtime = dev.getPlaybackTime()/dev.sampleRate;
+           var increment = (curtime-self.lasttime);
+           if(frame < max_frame) frame += (increment/secondspermeasure)*max_frame;
+           else frame = 0;
+           self.lasttime = curtime;
            var active = 0;
            for (var i = 0, j = self.queue.length; i < j; i++) {
                if (self.queue[i].active) {
