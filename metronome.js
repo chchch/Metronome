@@ -19,7 +19,6 @@ $(document).ready(function() {
                     Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
                     if(animator.active) {
                         animator.reinit();
-                        animator.catchup();
                         ClearAll();
                     }
                 }
@@ -79,9 +78,11 @@ $(document).ready(function() {
     four.start();
 });
 
-function ClearAll() {
+function ClearAll(activeonly) {
     for (var n = 0; n < nomes.length; ++n)
-        nomes[n].clear();
+        if(activeonly) {
+            if(nomes[n].active) nomes[n].clear();
+        } else nomes[n].clear();
 }
 
 Nome = function(w, h, beats) {
@@ -113,25 +114,26 @@ Nome = function(w, h, beats) {
             self.init(result[1]);
             self.ticker.setRatio(result[1]);
             self.clear();
-            if (!animator.active || !self.active) self.draw(-1);
-            if(nomes[master_nome] == self) {
+            if(nomes[master_nome] == self && animator.active) {
                 animator.reinit();
                 Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
-                ClearAll();
+                ClearAll(true);
             }
+            if (!animator.active || !self.active) self.draw(-1);
         }
         return result[0];
     });
     $(this.rhythm).keyup(function() {
         if (self.rhythm.value && self.beats != self.rhythm.value) {
            self.init(self.rhythm.value);
+           self.ticker.setRatio(self.rhythm.value);
            self.clear();
-           if (!animator.active || !self.active) self.draw(-1);
-           if(nomes[master_nome] == self) {
+           if(nomes[master_nome] == self && animator.active) {
                animator.reinit();
                Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
-               ClearAll();
+               ClearAll(true);
            }
+           if (!animator.active || !self.active) self.draw(-1);
        }
     });
     this.options.appendChild(this.playing);
@@ -250,7 +252,7 @@ function Animator() {
     this.pause = function() {
         if (!self.active) {
             self.active = true;
-            ClearAll();
+            ClearAll(true);
             self.catchup();
             self.reinit();
             if (!self.timer) self.animate();
