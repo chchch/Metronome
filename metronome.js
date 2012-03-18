@@ -125,6 +125,7 @@ Nome = function(w, h, beats) {
     $(this.rhythm).keyup(function() {
         if (self.rhythm.value && self.beats != self.rhythm.value) {
            self.init(self.rhythm.value);
+           self.ticker.setRatio(self.rhythm.value);
            self.clear();
            if (!animator.active || !self.active) self.draw(-1);
            if(nomes[master_nome] == self) {
