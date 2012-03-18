@@ -3,19 +3,26 @@ $(document).ready(function() {
     master_bpm = 60;
     fpm = 3600; // assuming 60 frames per second
     nome_size = {w:400, h:20};
-    is_chrome = /chrome/.test(navigator.userAgent.toLowerCase());
     animator = new Animator();
     nomes = [];
     var five = new Nome(nome_size.w, nome_size.h, 5);
     var four = new Nome(nome_size.w, nome_size.h, 4);
-    frame = 0;
+    curpos = 0;
     master_nome = 0;
 
     $("#main").sortable({
         items: "div:not(.no-sort)",
-        stop: function(event, ui) {
-                master_nome = $("#main .nome:eq(0)").attr('id').split("-")[1];
-                InitAll();
+        stop: function() {
+                var new_master = $("#main .nome:eq(0)").attr('id').split("-")[1];
+                if(master_nome != new_master) {
+                    master_nome = new_master;
+                    Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
+                    if(animator.active) {
+                        animator.reinit();
+                        animator.catchup();
+                        ClearAll();
+                    }
+                }
              }
         });
     $("#main").append("<div class='no-sort' \
@@ -45,15 +52,17 @@ $(document).ready(function() {
         var result = numbersonly(document.getElementById("bpm"), event, 999);
         if (result[1]) {
             master_bpm = result[1];
-            InitAll();
+            animator.reinit();
+            Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
         }
         return result[0];
     });
-    $("#bpm").keyup(function(event) {
+    $("#bpm").keyup(function() {
         var result = document.getElementById("bpm").value;
         if (result && master_bpm != result) {
             master_bpm = result;
-            InitAll();
+            animator.reinit();
+            Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
         }
     });
     $("#main").append(five.div);
@@ -62,21 +71,17 @@ $(document).ready(function() {
     $("#plus").click(function() {
         var newnome = new Nome(nome_size.w, nome_size.h, 2);
         $("#plus").before(newnome.div);
-        InitAll();
         newnome.start();
     });
-    InitAll();
+    
+    Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
     five.start();
     four.start();
 });
 
-function InitAll() {
-    var bpm = master_bpm / nomes[master_nome].beats;
-    max_frame = Math.round(fpm / bpm);
+function ClearAll() {
     for (var n = 0; n < nomes.length; ++n)
-        nomes[n].init();
-
-    Ticker.prototype.setBPM(bpm);
+        nomes[n].clear();
 }
 
 Nome = function(w, h, beats) {
@@ -107,14 +112,26 @@ Nome = function(w, h, beats) {
         if (result[1]) {
             self.init(result[1]);
             self.ticker.setRatio(result[1]);
+            self.clear();
             if (!animator.active || !self.active) self.draw(-1);
+            if(nomes[master_nome] == self) {
+                animator.reinit();
+                Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
+                ClearAll();
+            }
         }
         return result[0];
     });
-    $(this.rhythm).keyup(function(event) {
+    $(this.rhythm).keyup(function() {
         if (self.rhythm.value && self.beats != self.rhythm.value) {
            self.init(self.rhythm.value);
+           self.clear();
            if (!animator.active || !self.active) self.draw(-1);
+           if(nomes[master_nome] == self) {
+               animator.reinit();
+               Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
+               ClearAll();
+           }
        }
     });
     this.options.appendChild(this.playing);
@@ -138,27 +155,26 @@ Nome = function(w, h, beats) {
         self.ctx.clearRect(0, 0, self.size.w, self.size.h);
     }
     this.draw = function(d) {
-        self.clear();
-        var pos = (typeof(d) != "undefined" ? d : Math.floor(frame / self.framesperbeat));
-        if (pos >= 0) {
-            var x = self.size.w * frame / max_frame;
-            var lineargrad = self.ctx.createLinearGradient(0, 0, x, self.size.h);
+        var whichbeat = d || Math.floor(curpos/self.pixelsperbeat);
+        if(whichbeat <= 0) self.clear();
+        if (whichbeat >= 0) {
+            var lineargrad = self.ctx.createLinearGradient(0, 0, curpos, self.size.h);
             lineargrad.addColorStop(0, "white");
             lineargrad.addColorStop(1, "green");
 
             self.ctx.fillStyle = lineargrad;
-            self.ctx.fillRect(0, 0, x, self.size.h);
+            self.ctx.fillRect(0, 0, curpos, self.size.h);
             self.ctx.fill();
         }
         self.ctx.fillStyle = "red";
-        for (var n = 0; n <= pos; ++n)
-            self.ctx.fillRect(n * self.pixelsperbeat, 0, 2, self.size.h);
+        for (var n = 0; n <= whichbeat; ++n)
+            self.ctx.fillRect(Math.ceil(n * self.pixelsperbeat), 0, 2, self.size.h);
 
         self.ctx.fill();
         self.ctx.fillStyle = "green";
-        if (pos < self.beats) {
-            for (var n = pos + 1; n < self.beats; ++n)
-                self.ctx.fillRect(n * self.pixelsperbeat, 0, 2, self.size.h);
+        if (whichbeat < self.beats) {
+            for (var n = whichbeat + 1; n < self.beats; ++n)
+                self.ctx.fillRect(Math.ceil(n * self.pixelsperbeat), 0, 2, self.size.h);
             self.ctx.fill();
         }
     }
@@ -167,11 +183,11 @@ Nome = function(w, h, beats) {
 
     this.init = function(b) {
         if (b) self.beats = b;
-        self.framesperbeat = Math.ceil(max_frame / self.beats);
-        self.pixelsperbeat = Math.ceil(self.size.w / self.beats);
+        self.pixelsperbeat = self.size.w / self.beats;
     }
 
     this.start = function() {
+        self.init();
         if (!animator.active) self.draw(-1);
         self.active = true;
         animator.enqueue(self);
@@ -227,7 +243,6 @@ function Animator() {
     }
     this.start = function() {
         if (!self.active) {
-            frame = 0;
             self.active = true;
             if (!self.timer) self.animate();
         }
@@ -235,15 +250,15 @@ function Animator() {
     this.pause = function() {
         if (!self.active) {
             self.active = true;
-            animator.lasttime = dev.getPlaybackTime()/dev.sampleRate;
-            var ticker = nomes[master_nome].ticker;
-            var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
-            frame = percentdone*max_frame;
+            ClearAll();
+            self.catchup();
+            self.reinit();
             if (!self.timer) self.animate();
         } else {
             self.stop();
         }
     }
+
     this.stop = function() {
         self.active = false;
         self.timer = false;
@@ -251,21 +266,24 @@ function Animator() {
     this.clear = function() {
         self.queue = [];
     }
+    this.secondspermeasure = 0;
     this.lasttime = 0;
+    this.reinit = function() {
+        self.secondspermeasure = (60/master_bpm)*nomes[master_nome].beats;
+        var ticker = nomes[master_nome].ticker;
+        var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
+        curpos = percentdone*nome_size.w;
+    }
+    this.catchup = function() { 
+        self.lasttime = dev.getPlaybackTime()/dev.sampleRate;
+    }
     this.animate = function() {
         self.timer = false;
         if (self.active) {
-//            if (frame < max_frame) ++frame;
-//           else frame -= max_frame;
-           var secondspermeasure = 1/(master_bpm/60)*nomes[master_nome].beats;
            var curtime = dev.getPlaybackTime()/dev.sampleRate;
            var increment = (curtime-self.lasttime);
-           if(frame < max_frame) frame += (increment/secondspermeasure)*max_frame;
-           else {
-                var ticker = nomes[master_nome].ticker;
-                var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
-                frame = percentdone*max_frame;
-           }
+           if (curpos < nome_size.w) curpos += (increment/self.secondspermeasure)*nome_size.w;
+           else self.reinit();
            self.lasttime = curtime;
            var active = 0;
            for (var i = 0, j = self.queue.length; i < j; i++) {
