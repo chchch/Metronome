@@ -66,7 +66,7 @@ $(document).ready(function() {
     });
     $("#main").append(five.div);
     $("#main").append(four.div);
-    $("#main").append("<div id='plus' class='no-sort'>+</div>");
+    $("#main").append("<div id='plus' class='no-sort' style='cursor: default'>+</div>");
     $("#plus").click(function() {
         var newnome = new Nome(nome_size.w, nome_size.h, 2);
         $("#plus").before(newnome.div);
@@ -93,6 +93,7 @@ Nome = function(w, h, beats) {
     this.div.id = "nome-" + (nomes.length - 1);
     this.div.className = "nome";
     this.canvas = document.createElement("canvas");
+	this.canvas.style.cursor = "move";
     this.options = document.createElement("form");
     this.options.style.paddingRight = "5px";
     this.playing = document.createElement("input");
