@@ -79,7 +79,7 @@ $(document).ready(function() {
 });
 
 function ClearAll(activeonly) {
-    for (var n = 0; n < nomes.length; ++n)
+    for (var n = 0,nn=nomes.length; n < nn; ++n)
         if(activeonly) {
             if(nomes[n].active) nomes[n].clear();
         } else nomes[n].clear();
@@ -346,7 +346,7 @@ function numbersonly(field, evt, max_n) {
 (function() {
     var lastTime = 0;
     var vendors = ['ms', 'moz', 'webkit', 'o'];
-    for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x)
+    for (var x = 0,xx=vendors.length; x < xx && !window.requestAnimationFrame; ++x)
         window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
 
     if (!window.requestAnimationFrame)
