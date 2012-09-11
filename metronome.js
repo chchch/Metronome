@@ -47,7 +47,7 @@ $(document).ready(function() {
             playpause.play();
         }
     });
-    $("#bpm").keypress(function(event) {
+    $("#bpm").keydown(function(event) {
         var result = numbersonly(document.getElementById("bpm"), event, 999);
         if (result[1]) {
             master_bpm = result[1];
@@ -109,7 +109,7 @@ Nome = function(w, h, beats) {
     this.ticker = new Ticker(beats);
     Ticker.prototype.tickers.push(this.ticker);
 
-    $(this.rhythm).keypress(function(event) {
+    $(this.rhythm).keydown(function(event) {
         var result = numbersonly(self.rhythm, event, 99);
         if (result[1]) {
             self.init(result[1]);
@@ -329,6 +329,8 @@ function numbersonly(field, evt, max_n) {
       case 8:
       case 9:
       case 27:
+	  case 37: // left arrow
+	  case 39: // right arrow
           return [true, false];
       default:
         break;
