@@ -9,6 +9,7 @@ $(document).ready(function() {
     var four = new Nome(nome_size.w, nome_size.h, 4);
     curpos = 0;
     master_nome = 0;
+	is_chrome = /chrome/.test( navigator.userAgent.toLowerCase() );
 
     $("#main").sortable({
         items: "div:not(.no-sort)",
@@ -274,8 +275,9 @@ function Animator() {
     this.reinit = function() {
         self.secondspermeasure = (60/master_bpm)*nomes[master_nome].beats;
         var ticker = nomes[master_nome].ticker;
-        var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
-        curpos = percentdone*nome_size.w;
+    if(is_chrome) var percentdone = (ticker.counter-dev.sampleRate/4)/ticker.measure_length;
+	else var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
+    curpos = percentdone*nome_size.w; // ugly chrome hack
     }
     this.catchup = function() { 
         self.lasttime = dev.getPlaybackTime()/dev.sampleRate;
