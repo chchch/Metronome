@@ -23,6 +23,19 @@ $(document).ready(function() {
                         ClearAll();
                     }
                 }
+				var neworder = $("#main .nome canvas");
+				var neworderform = $("#main .nome form");
+				for(var n=0,nn=neworder.length;n<nn;n++) {
+					if(n == 0 || n % 2 != 0) {
+						neworder[n].style.background = "";
+						neworder[n].style.outline = "";
+						neworderform[n].style.background = "";
+					} else {
+						neworder[n].style.background = "rgba(0,0,0,0.25)";
+						neworder[n].style.outline = "3px solid rgba(0,0,0,0.25)";
+						neworderform[n].style.background = "rgba(0,0,0,0.25)";
+					}
+				}
              }
         });
     $("#main").append("<div class='no-sort' \
@@ -33,12 +46,13 @@ $(document).ready(function() {
         <input id='bpm' type='text' style='width:2em' size='3' max_length='3' \
         value='"+master_bpm+"'></input>BPM</div> \
         <div id='playpause' class='no-sort' \
-        style='position:absolute;right:0px;top:"+(nome_size.h+10)+"px;height:20px; \
-        '></div> \
+        style='position:absolute;right:0px;top:"+(nome_size.h+10)+"px;height:"+nome_size.h/2+
+		"px;padding: 1px 1px 1px 1px'></div> \
         </form></div>");
     playpause = new PlayPause(nome_size.h / 2);
     playpause.play();
-    $("#playpause").append(playpause.canvas);
+	$("#playpause").css("cursor","pointer");
+	$("#playpause").append(playpause.canvas);
     $("#playpause").click(function() {
         if (!animator.active) {
             animator.pause();
@@ -48,6 +62,10 @@ $(document).ready(function() {
             playpause.play();
         }
     });
+	$("#playpause").mouseover(function() {
+		$(this).css("background","#cccccc");}).mouseout(function() {
+		$(this).css("background","none");});
+
     $("#bpm").keydown(function(event) {
         var result = numbersonly(document.getElementById("bpm"), event, 999);
         if (result[1]) {
@@ -67,13 +85,17 @@ $(document).ready(function() {
     });
     $("#main").append(five.div);
     $("#main").append(four.div);
-    $("#main").append("<div id='plus' class='no-sort' style='cursor: default'>+</div>");
+    $("#main").append("<span id='plus' class='no-sort' style='cursor:"+
+			"pointer;position:relative;font-size:20px;padding:0 4px 0 4px'>+</div>");
     $("#plus").click(function() {
         var newnome = new Nome(nome_size.w, nome_size.h, 2);
         $("#plus").before(newnome.div);
         newnome.start();
     });
-    
+    $("#plus").mouseover(function() {
+		$(this).css("background","#cccccc");}).mouseout(function() {
+		$(this).css("background","none");});
+ 
     Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
     five.start();
     four.start();
@@ -96,7 +118,7 @@ Nome = function(w, h, beats) {
     this.canvas = document.createElement("canvas");
 	this.canvas.style.cursor = "move";
     this.options = document.createElement("form");
-    this.options.style.paddingRight = "5px";
+	this.options.style.padding = "6px 3px 6px 1px";
     this.playing = document.createElement("input");
     this.playing.type = "checkbox";
     this.playing.checked = true;
@@ -151,11 +173,17 @@ Nome = function(w, h, beats) {
     this.canvas.style.height = h + 'px';
     this.canvas.style.top = 0 + 'px';
     this.canvas.style.left = 0 + 'px';
-    this.canvas.style.border = "1px solid yellow";
+//    this.canvas.style.border = "1px solid yellow";
     this.active = false;
     this.beats = beats;
 
-    this.clear = function() {
+	if(nomes[0] != this && nomes.indexOf(this) % 2 == 0) {
+		this.canvas.style.background = "rgba(0,0,0,0.25)";
+		this.canvas.style.outline = "3px solid rgba(0,0,0,0.25)";
+		this.options.style.background = "rgba(0,0,0,0.25)";
+	}
+    
+	this.clear = function() {
         self.ctx.clearRect(0, 0, self.size.w, self.size.h);
     }
     this.draw = function(d) {
