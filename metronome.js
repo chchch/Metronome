@@ -1,4 +1,5 @@
-$(document).ready(function() {
+document.getElementById('main').addEventListener('click',e => {
+    e.target.textContent = '';
     dev = audioLib.Sink(audioCallback, 1 /* channelCount */);
     master_bpm = 60;
     fpm = 3600; // assuming 60 frames per second
@@ -99,7 +100,7 @@ $(document).ready(function() {
     Ticker.prototype.setBPM(master_bpm/nomes[master_nome].beats);
     five.start();
     four.start();
-});
+},{once: true});
 
 function ClearAll(activeonly) {
     for (var n = 0,nn=nomes.length; n < nn; ++n)
@@ -303,8 +304,9 @@ function Animator() {
     this.reinit = function() {
         self.secondspermeasure = (60/master_bpm)*nomes[master_nome].beats;
         var ticker = nomes[master_nome].ticker;
-    if(is_chrome) var percentdone = (ticker.counter-dev.sampleRate/4)/ticker.measure_length;
-	else var percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
+        let percentdone;
+    if(is_chrome) percentdone = (ticker.counter-dev.sampleRate/4)/ticker.measure_length;
+	else percentdone = (ticker.counter-dev.sampleRate/2)/ticker.measure_length;
     curpos = percentdone*nome_size.w; // ugly chrome hack
     }
     this.catchup = function() { 
